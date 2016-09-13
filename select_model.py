@@ -2,13 +2,8 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-#from sklearn.decomposition import PCA as sklearnPCA
-from sklearn import svm
-from sklearn.metrics import roc_curve, roc_auc_score, f1_score
-from sklearn.metrics import make_scorer
-from sklearn.cross_validation import StratifiedKFold
-from sklearn.grid_search import GridSearchCV
-#import matplotlib.pyplot as plt
+from helpers.cross_validation import fit_model
+
 
 # set random state for camparability
 random_state = np.random.RandomState(0)
@@ -46,19 +41,6 @@ X_bin, Y_bin = X_bin[Y_bin != 4], Y_bin[Y_bin != 4]
 Y_bin[Y_bin==3] = 0
 
 scaled_X = preprocessing.scale(X_bin)
-
-# We want 6-fold stratified samples
-cv = StratifiedKFold(Y_bin, n_folds=6)
-
-# Setup a param grid
 param_grid = {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}
-
-# instantiate svm model
-svr = svm.SVC()
-
-# Perform cross validation
-f1_scorer = make_scorer(f1_score, pos_label=1.0)
-clf = GridSearchCV(estimator=svr, param_grid = param_grid, n_jobs=-1,
-                   scoring='roc_auc', cv = cv)
-clf.fit(X_bin, Y_bin)
+clf = fit_model(scaled_X,Y_bin,param_grid,'f1',6)
 clf.best_score_
