@@ -2,7 +2,8 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-from helpers.cross_validation import fit_model
+from helpers.models import fit_model
+from sklearn.cross_validation import train_test_split
 
 
 # set random state for camparability
@@ -32,15 +33,18 @@ variables = variables.join(reclass,how='inner')
 
 # Get dataframe as matrix and scale it:
 data = variables.as_matrix()
-Y = data[:,0]
-X = data[:,1:]
+data_Y = data[:,0]
+data_X = data[:,1:]
 # Get only positive and negative classes, first with original data
-X_bin, Y_bin = X[Y != 2], Y[Y != 2]
-X_bin, Y_bin = X_bin[Y_bin != 4], Y_bin[Y_bin != 4]
+X, Y = data_X[data_Y != 2], data_Y[data_Y != 2]
+X, Y = X[Y != 4], Y[Y != 4]
 # recode class:
-Y_bin[Y_bin==3] = 0
+Y[Y==3] = 0
+# Scale sample
+scaled_X = preprocessing.scale(X)
+# test and train split
 
-scaled_X = preprocessing.scale(X_bin)
+
 param_grid = {'C': [1, 10, 100, 1000], 'gamma': [0.001, 0.0001], 'kernel': ['rbf']}
-clf = fit_model(scaled_X,Y_bin,param_grid,'f1',6)
+clf = fit_model(scaled_X,Y,param_grid,'f1',6)
 clf.best_score_
