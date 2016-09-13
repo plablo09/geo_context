@@ -14,11 +14,11 @@ from sklearn.grid_search import GridSearchCV
 random_state = np.random.RandomState(0)
 
 # read data
-context = pd.read_csv('muestra_variables.csv')
+context = pd.read_csv('data/muestra_variables.csv')
 # select variable columns
 cols_select = context.columns[6:]
 variables = context.ix[:,cols_select]
-for c in ['no_se','uname','cont','lat','lon','geom','cve_mza']:
+for c in ['no_se','uname','content','cve_mza']:
     del variables[c]
 
 # reclass intervalo as numerical
@@ -41,6 +41,7 @@ Y = data[:,0]
 X = data[:,1:]
 # Get only positive and negative classes, first with original data
 X_bin, Y_bin = X[Y != 2], Y[Y != 2]
+X_bin, Y_bin = X_bin[Y_bin != 4], Y_bin[Y_bin != 4]
 # recode class:
 Y_bin[Y_bin==3] = 0
 
