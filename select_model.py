@@ -2,8 +2,9 @@
 import numpy as np
 import pandas as pd
 from sklearn import preprocessing
-from helpers.models import fit_model
 from sklearn.cross_validation import train_test_split
+from helpers.models import fit_model
+from helpers.helpers import make_binary, class_info, flip_labels
 
 
 # set random state for camparability
@@ -31,22 +32,42 @@ reclass = variables['intervalo'].apply(intervalo_to_numbers)
 del variables['intervalo']
 variables = variables.join(reclass,how='inner')
 
-# Get dataframe as matrix and scale it:
+# Get dataframe and slit in predictor (X) and target (Y):
 data = variables.as_matrix()
 data_Y = data[:,0]
 data_X = data[:,1:]
-# Get only positive and negative classes, first with original data
-X, Y = data_X[data_Y != 2], data_Y[data_Y != 2]
-X, Y = X[Y != 4], Y[Y != 4]
-# recode class:
-Y[Y==3] = 0
+print("Initial label distribution")
+class_info(data_Y)
 
-# test and train split
-X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
+# Eliminate data labeled 4 (don't know what that means)
+data_X, data_Y = data_X[data_Y != 4], data_Y[data_Y != 4]
+
+# Make two binarizations of data, one aggregating POS + Neu and one Neg + Neu
+Y_pos_neu = make_binary(data_Y, set((1.,2.)))
+Y_neg_neu = make_binary(data_Y, set((3.,2.)))
+print("Label distribution after binarization")
+print("Pos + Neu")
+class_info(Y_pos_neu)
+print()
+print("Neg + Neu")
+class_info(Y_neg_neu)
+
+# test and train split for both binarizations
+(X_train_pos_neu, X_test_pos_neu, 
+Y_train_pos_neu, Y_test_pos_neu) = train_test_split(data_X, Y_pos_neu,
                                                     test_size=0.4,
                                                     random_state=random_state)
-# Scale sample
-scaled_X = preprocessing.scale(X_train)
+
+(X_train_neg_neu, X_test_neg_neu, 
+Y_train_neg_neu, Y_test_neg_neu) = train_test_split(data_X, Y_neg_neu,
+                                                    test_size=0.4,
+                                                    random_state=random_state)
+
+
+# Scale all train samples
+X_pos_neu_s = preprocessing.scale(X_train_pos_neu)
+X_neg_neu_s = preprocessing.scale(X_train_neg_neu)
+
 
 # parameters for model fitting
 param_grid = {'C': [1, 10, 100, 1000], 'gamma': [0.01,0.001, 0.0001],
@@ -54,11 +75,12 @@ param_grid = {'C': [1, 10, 100, 1000], 'gamma': [0.01,0.001, 0.0001],
 metrics = ['f1','accuracy','average_precision','roc_auc','recall']
 
 # Fit models and store them
-fitted_models = {}
+fitted_models_pos_neu = {}
 for metric in metrics:
-    fitted_models[metric] = fit_model(scaled_X,Y_train,param_grid,metric,6)
+    fitted_models_pos_neu[metric] = fit_model(X_pos_neu_s,Y_train_pos_neu,
+                                                param_grid,metric,6)
 
-for metric, model in fitted_models.items():
+for metric, model in fitted_models_pos_neu.items():
     print ("Using metric {}".format(metric))
     print("Best parameters set found on development set:")
     print()
