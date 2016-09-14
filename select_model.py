@@ -3,9 +3,9 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 from sklearn.cross_validation import train_test_split
+from sklearn.metrics import confusion_matrix
 from helpers.models import fit_model
 from helpers.helpers import make_binary, class_info, flip_labels
-
 
 # set random state for camparability
 random_state = np.random.RandomState(0)
@@ -51,7 +51,7 @@ class_info(Y_pos_neu)
 print()
 print("Neg + Neu")
 class_info(Y_neg_neu)
-
+from sklearn.metrics import confusion_matrix
 # test and train split for both binarizations
 (X_train_pos_neu, X_test_pos_neu, 
 Y_train_pos_neu, Y_test_pos_neu) = train_test_split(data_X, Y_pos_neu,
@@ -93,4 +93,19 @@ for metric, model in fitted_models_pos_neu.items():
 
     print()
 
-#
+# Validate on test sample
+X_pos_neu_s_test = preprocessing.scale(X_test_pos_neu)
+for metric, model in fitted_models_pos_neu.items():
+    this_estimator = fitted_models_pos_neu[metric].best_estimator_ 
+    this_score = this_estimator.score(X_pos_neu_s_test, Y_test_pos_neu)
+    y_pred = this_estimator.fit(X_pos_neu_s_test, Y_test_pos_neu).predict(X_pos_neu_s_test)
+    #conf_matrix = confusion_matrix(Y_test_pos_neu,y_pred)
+    df_confusion = pd.crosstab(Y_test_pos_neu, y_pred, 
+                               rownames=['Actual'], 
+                               colnames=['Predicted'], margins=True)
+    print ("Using metric {}".format(metric))
+    print("Validation score {}".format(this_score))
+    print()
+    print("Confusion Matrix:")
+    print(df_confusion)
+    
