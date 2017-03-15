@@ -1,0 +1,14 @@
+ LOAD CSV  
+      FROM '/home/plablo09/sync_ws/inv_viv.csv' WITH ENCODING latin1   
+      INTO postgresql://uname:password@localhost:5432/twitter_context?inventario_vivienda
+ 
+      WITH  
+	   drop indexes, 
+           skip header = 1,  
+           fields escaped by double-quote,  
+           fields terminated by ','
+ 
+       SET client_encoding to 'utf-8',  
+           work_mem to '12MB',  
+           standard_conforming_strings to 'on';
+  
